@@ -43,10 +43,13 @@ class SpEDA:
     def update_pm(self):
         self.pm.fit(self.generation.drop('cost', axis=1))
 
-    def new_generation(self):
-        # TODO: implement elitist approach
-        self.generation = self.pm.sample(self.size_gen).to_pandas()
+    def new_generation(self, per_elitist=0.1):
+        # Elitist approach: 10% from previous generation and 90% new sampling
+        bests = self.generation.head(int(self.size_gen*per_elitist))
+        size_sampling = int((1-per_elitist)*self.size_gen)
+        self.generation = self.pm.sample(size_sampling).to_pandas()
         self.generation['cost'] = np.nan
+        self.generation = self.generation.append(bests).reset_index(drop=True)
 
     def run(self):
         no_improvement_it = 0

@@ -54,7 +54,7 @@ class SpEDA:
     def run(self):
         no_improvement_it = 0
         for iteration in range(self.max_it):
-            if iteration == self.dead_it:
+            if no_improvement_it == self.dead_it:
                 return self.best_cost, self.best_ind, self.history
 
             self.evaluation()
@@ -65,6 +65,7 @@ class SpEDA:
             if best_local_cost < self.best_cost:
                 self.best_cost = best_local_cost
                 self.best_ind = self.generation.loc[0].to_dict()
+                no_improvement_it = 0
             else:
                 no_improvement_it += 1
 

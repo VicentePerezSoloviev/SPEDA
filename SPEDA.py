@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pybnesian import SemiparametricBN
+import random
 
 
 class SpEDA:
@@ -31,6 +32,10 @@ class SpEDA:
             self.generation[col] = np.random.normal(self.vector.loc['mu', col],
                                                     self.vector.loc['std', col],
                                                     size=self.size_gen)
+
+        '''for col in self.generation.drop('cost', axis=1).columns:
+            # self.generation[col] = np.random.randint(-100, 100, self.size_gen)
+            self.generation[col] = [random_float(-100, 100) for i in range(self.size_gen)]'''
 
     def evaluation(self):
         for i in range(len(self.generation)):
@@ -71,7 +76,9 @@ class SpEDA:
 
             self.history.append(best_local_cost)
 
-            self.new_generation()
+            self.new_generation(per_elitist=0.1)
 
         return self.best_cost, self.best_ind, self.history
 
+def random_float(low, high):
+    return random.random()*(high-low) + low

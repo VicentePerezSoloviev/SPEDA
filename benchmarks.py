@@ -52,8 +52,8 @@ class Benchmarking:
         for i in range(self.d):
             f += x[i]**2/4000
         aux_ = 0
-        for i in range(1, self.d+1):
-            aux_ *= np.cos(x[i]/np.sqrt(i)) + 1
+        for i in range(1, self.d):
+            aux_ *= np.cos(x[i-1]/np.sqrt(i)) + 1
         return f - aux_
 
     def rastrigins_function(self, x):
@@ -63,6 +63,3 @@ class Benchmarking:
         return result
 
     # def modified_schwefel_function(self):
-
-
-

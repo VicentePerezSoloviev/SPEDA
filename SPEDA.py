@@ -49,8 +49,6 @@ class SpEDA:
     def update_pm(self):
         self.pm = SemiparametricBN(self.variables)
         self.pm.fit(self.generation.drop('cost', axis=1))
-        # for i in self.variables:
-            # print(self.pm.cpd(i), self.generation[i].mean(), self.generation[i].std())
 
     def new_generation(self, per_elitist=0.1):
         # Elitist approach: 10% from previous generation and 90% new sampling

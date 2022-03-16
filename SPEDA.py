@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pybnesian import SemiparametricBN
+from pybnesian import SemiparametricBN, GaussianNetwork
 import random
 
 
@@ -19,10 +19,11 @@ class SpEDA:
 
         self.cost_function = cost_function
         self.vector = vector
-        variables = list(vector.columns)
+        self.variables = list(vector.columns)
 
-        self.generation = pd.DataFrame(columns=variables + ['cost'])
-        self.pm = SemiparametricBN(variables)
+        self.generation = pd.DataFrame(columns=self.variables + ['cost'])
+        self.pm = SemiparametricBN(self.variables)
+        # self.pm = GaussianNetwork(self.variables)
 
         self.initialization()
 
@@ -39,22 +40,25 @@ class SpEDA:
 
     def evaluation(self):
         for i in range(len(self.generation)):
-            self.generation.loc[i, 'cost'] = self.cost_function(self.generation.drop('cost', axis=1).loc[i].values)
+            self.generation.loc[i, 'cost'] = self.cost_function(self.generation[self.variables].loc[i].values)
 
     def truncation(self):
         self.generation['cost'] = self.generation['cost'].astype(float)
         self.generation = self.generation.nsmallest(self.trunc_size, 'cost').reset_index(drop=True)
 
     def update_pm(self):
+        self.pm = SemiparametricBN(self.variables)
         self.pm.fit(self.generation.drop('cost', axis=1))
+        # for i in self.variables:
+            # print(self.pm.cpd(i), self.generation[i].mean(), self.generation[i].std())
 
     def new_generation(self, per_elitist=0.1):
         # Elitist approach: 10% from previous generation and 90% new sampling
         bests = self.generation.head(int(self.size_gen*per_elitist))
         size_sampling = int((1-per_elitist)*self.size_gen)
         self.generation = self.pm.sample(size_sampling).to_pandas()
-        self.generation['cost'] = np.nan
-        self.generation = self.generation.append(bests).reset_index(drop=True)
+        # self.generation['cost'] = np.nan
+        self.generation = self.generation[self.variables].append(bests[self.variables]).reset_index(drop=True)
 
     def run(self):
         no_improvement_it = 0
@@ -77,8 +81,10 @@ class SpEDA:
             self.history.append(best_local_cost)
 
             self.new_generation(per_elitist=0.1)
+            # print('IT', str(iteration), '\tcost', self.best_cost)
 
         return self.best_cost, self.best_ind, self.history
+
 
 def random_float(low, high):
     return random.random()*(high-low) + low

@@ -21,7 +21,7 @@ filename = 'results_eda_30_200_2.csv'
 
 for it in range(15):
     for alpha in [0.6, 0.7, 0.8, 0.9, 1.0]:
-        eda = SpEDA(alpha=alpha, max_it=1500, dead_it=500, size_gen=200,
+        eda = SpEDA(alpha=alpha, max_it=3000, dead_it=500, size_gen=100,
                     cost_function=benchmarking.rastrigins_function, vector=initial_vector)
         best_cost, best_ind, history = eda.run()
         print(it, alpha, best_cost)

@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # solution = np.array([0.5, 0.1, -0.3, 0.9, 0.4, -0.6, 0.2])
 # dim_theta = solution.shape[0]
@@ -118,16 +119,16 @@ def jade(thetas_limit, target_vectors_init, objective_function, uCR=0.5, uF=0.6,
         # print("uCR : ", sCR)
         # print("uF ", sF)
         uCR = (1 - c) * uCR + c * np.mean(sCR)
-        print(sCR, uCR, sF)
+        # print(sCR, uCR, sF)
         uF = (1 - c) * uF + c * (np.sum(np.power(sF, 2)) / np.sum(sF))
-        print("Generation:", str(gen), "Best fitness:", best_fitness)
+        # print("Generation:", str(gen), "Best fitness:", best_fitness)
         list_best_fitness.append(best_fitness)
     return list_best_fitness
 
 
 limits = [(-100, 100)] * num_vars
 # print(limits)
-size_gen = 200
+'''size_gen = 200
 target_vectors = np.random.rand(size_gen, num_vars)
 target_vectors = np.interp(target_vectors, (0, 1), (-1, 1))
 print("Differential Evolution")
@@ -141,4 +142,24 @@ ax.plot(result_jade, label="JADE")
 ax.legend()
 plt.show()
 print("Best DE :", result_de[-1])
-print("Best JADE :", result_jade[-1])
+print("Best JADE :", result_jade[-1])'''
+
+
+dt_results = pd.DataFrame(columns=['uCR', 'uF', 'c', 'size_gen', 'it', 'cost'])
+index = 0
+filename = 'results_jade_300000_2.csv'
+
+for uCR in [0.1, 0.3, 0.5, 0.7, 0.9]:
+    for uF in [0.1, 0.3, 0.5, 0.7, 0.9]:
+        for c in [0.1, 0.3, 0.5, 0.7, 0.9]:
+            for size_gen in [100, 200]:
+                for it in range(15):
+                    target_vectors = np.random.rand(size_gen, num_vars)
+                    target_vectors = np.interp(target_vectors, (0, 1), (-1, 1))
+                    result_jade = jade(limits, target_vectors, benchmarking.rastrigins_function,
+                                       uCR=uCR, uF=uF, c=c, NP=size_gen, max_gen=int(150000/size_gen))
+
+                    dt_results.loc[0] = [uCR, uF, c, size_gen, it, min(result_jade)]
+                    print(uCR, uF, c, size_gen, it, min(result_jade))
+                    index += 1
+                    dt_results.to_csv(filename)

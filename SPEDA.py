@@ -11,7 +11,7 @@ class SpEDA:
     history = []
 
     def __init__(self, alpha: float, max_it: int, dead_it: int, size_gen: int,
-                 cost_function: callable, vector: pd.DataFrame):
+                 cost_function: callable, vector: pd.DataFrame, model):
         self.max_it = max_it
         self.dead_it = dead_it
         self.size_gen = size_gen
@@ -22,7 +22,7 @@ class SpEDA:
         self.variables = list(vector.columns)
 
         self.generation = pd.DataFrame(columns=self.variables + ['cost'])
-        self.pm = SemiparametricBN(self.variables)
+        self.pm = model(self.variables)
         # self.pm = GaussianNetwork(self.variables)
 
         self.initialization()
@@ -33,10 +33,6 @@ class SpEDA:
             self.generation[col] = np.random.normal(self.vector.loc['mu', col],
                                                     self.vector.loc['std', col],
                                                     size=self.size_gen)
-
-        '''for col in self.generation.drop('cost', axis=1).columns:
-            # self.generation[col] = np.random.randint(-100, 100, self.size_gen)
-            self.generation[col] = [random_float(-100, 100) for i in range(self.size_gen)]'''
 
     def evaluation(self):
         for i in range(len(self.generation)):

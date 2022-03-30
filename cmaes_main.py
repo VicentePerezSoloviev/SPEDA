@@ -175,15 +175,18 @@ solutions = ipop_cmaes(benchmarking.rastrigins_function, num_vars,
 print(solutions)
 print(min([i[1] for i in solutions]))'''
 
-dt = pd.DataFrame(columns=['it', 'sol'])
+dt = pd.DataFrame(columns=['it', 'sol', 'cost_function'])
 index = 0
 num_vars = 30
 benchmarking = Benchmarking(num_vars)
-for it in range(15):
-    solutions = trad_cmaes(num_vars, benchmarking.rastrigins_function, dead_it=1500, max_it=1500)
+for cost_f in [['cec1', benchmarking.cec14_1],
+               ['cec4', benchmarking.cec14_4],
+               ['cec8', benchmarking.cec14_8]]:
+    for it in range(15):
+        solutions = trad_cmaes(num_vars, cost_f[1], dead_it=1500, max_it=1500)
 
-    dt.loc[index] = [it, min([i[1] for i in solutions])]
-    print(it, min([i[1] for i in solutions]))
-    index += 1
+        dt.loc[index] = [it, min([i[1] for i in solutions]), cost_f[0]]
+        print(it, min([i[1] for i in solutions]), cost_f[0])
+        index += 1
 
-dt.to_csv('results_cmaes_300000.csv')
+        dt.to_csv('results_cmaes_Funcs.csv')

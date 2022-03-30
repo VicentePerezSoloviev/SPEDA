@@ -145,21 +145,24 @@ print("Best DE :", result_de[-1])
 print("Best JADE :", result_jade[-1])'''
 
 
-dt_results = pd.DataFrame(columns=['uCR', 'uF', 'c', 'size_gen', 'it', 'cost'])
+dt_results = pd.DataFrame(columns=['uCR', 'uF', 'c', 'size_gen', 'it', 'cost', 'cost_function'])
 index = 0
-filename = 'results_jade_300000_2.csv'
+filename = 'results_jade_Funcs.csv'
 
-for uCR in [0.1, 0.3, 0.5, 0.7, 0.9]:
-    for uF in [0.1, 0.3, 0.5, 0.7, 0.9]:
-        for c in [0.1, 0.3, 0.5, 0.7, 0.9]:
-            for size_gen in [100, 200]:
-                for it in range(15):
-                    target_vectors = np.random.rand(size_gen, num_vars)
-                    target_vectors = np.interp(target_vectors, (0, 1), (-1, 1))
-                    result_jade = jade(limits, target_vectors, benchmarking.rastrigins_function,
-                                       uCR=uCR, uF=uF, c=c, NP=size_gen, max_gen=int(150000/size_gen))
+for cost_f in [['cec1', benchmarking.cec14_1],
+               ['cec4', benchmarking.cec14_4],
+               ['cec8', benchmarking.cec14_8]]:
+    for uCR in [0.25, 0.5, 0.75]:
+        for uF in [0.25, 0.5, 0.75]:
+            for c in [0.25, 0.5, 0.75]:
+                for size_gen in [200, 500, 1000]:
+                    for it in range(15):
+                        target_vectors = np.random.rand(size_gen, num_vars)
+                        target_vectors = np.interp(target_vectors, (0, 1), (-1, 1))
+                        result_jade = jade(limits, target_vectors, cost_f[1],
+                                           uCR=uCR, uF=uF, c=c, NP=size_gen, max_gen=int(150000/size_gen))
 
-                    dt_results.loc[0] = [uCR, uF, c, size_gen, it, min(result_jade)]
-                    print(uCR, uF, c, size_gen, it, min(result_jade))
-                    index += 1
-                    dt_results.to_csv(filename)
+                        dt_results.loc[0] = [uCR, uF, c, size_gen, it, min(result_jade), cost_f[0]]
+                        print(uCR, uF, c, size_gen, it, min(result_jade), cost_f[0])
+                        index += 1
+                        dt_results.to_csv(filename)

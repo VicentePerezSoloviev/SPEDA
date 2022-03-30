@@ -11,8 +11,8 @@ variables = [str(i) for i in range(num_vars)]
 initial_vector = pd.DataFrame(columns=variables)
 initial_vector['data'] = ['mu', 'std']
 initial_vector = initial_vector.set_index('data')
-initial_vector.loc['mu'] = [0]*num_vars
-initial_vector.loc['std'] = 40  # 200/5
+initial_vector.loc['mu'] = [50]*num_vars
+initial_vector.loc['std'] = 100  # 200/5
 
 benchmarking = Benchmarking(num_vars)
 

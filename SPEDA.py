@@ -23,6 +23,7 @@ class SpEDA:
         self.variables = list(vector.columns)
         self.l = l
         self.per_l = per_l
+        self.size_bests_gen = int(size_gen * per_l)
 
         self.generation = pd.DataFrame(columns=self.variables + ['cost'])
         self.set_bests = pd.DataFrame(columns=self.variables + ['cost'])
@@ -59,15 +60,15 @@ class SpEDA:
         self.generation['cost'] = self.generation['cost'].astype(float)
         self.generation = self.generation.nsmallest(self.trunc_size, 'cost').reset_index(drop=True)
 
-        size_bests_gen = int(self.size_gen * self.per_l)
-        bests = self.generation.head(size_bests_gen*self.l)
+        bests = self.generation.head(self.size_bests_gen*self.l)
         self.set_bests = self.set_bests[self.generation.columns].append(bests[self.generation.columns]).reset_index(drop=True)
-        self.set_bests = self.set_bests.nsmallest(self.l * size_bests_gen, 'cost').reset_index(drop=True)
+        self.set_bests = self.set_bests.nsmallest(self.l * self.size_bests_gen, 'cost').reset_index(drop=True)
         print(len(self.set_bests), len(bests))
 
     def update_pm(self):
         self.pm = SemiparametricBN(self.variables)
         hc = GreedyHillClimbing()
+        self.add_noise()
         df = self.generation.drop('cost', axis=1)
         df = df[self.variables].append(self.set_bests[self.variables]).reset_index(drop=True)
         vl = ValidatedLikelihood(df, k=2)
@@ -91,11 +92,13 @@ class SpEDA:
         # self.generation = self.generation[self.variables].append(bests[self.variables]).reset_index(drop=True)
         # self.add_noise()
 
-    def add_noise(self, size=0.2):
-        noise = pd.DataFrame(np.random.normal([0]*len(self.variables), [1000]*len(self.variables),
-                                              [int(self.size_gen*size), len(self.variables)]),
-                             columns=self.variables, dtype='float_')
-        self.generation[self.variables].append(noise).reset_index(drop=True)
+    def add_noise(self, size=0.1):
+        noise = pd.DataFrame(columns=self.variables, dtype='float_')
+        for col in self.generation.drop('cost', axis=1).columns:
+            noise[col] = np.random.normal(self.generation[col].mean(), 0.5,
+                                          size=int(self.size_gen*size))
+
+        self.generation[self.variables].append(noise)[self.variables].reset_index(drop=True)
 
     def run(self):
         no_improvement_it = 0

@@ -51,6 +51,7 @@ class SpEDA:
             # self.generation[col] = np.arange(-80, 80, 160/self.size_gen)
 
     def evaluation(self):
+        self.generation['cost'] = np.nan
         for i in range(len(self.generation)):
             self.generation.loc[i, 'cost'] = self.cost_function(self.generation[self.variables].loc[i].values)
 
@@ -61,7 +62,7 @@ class SpEDA:
         size_bests_gen = int(self.size_gen * self.per_l)
         bests = self.generation.head(size_bests_gen*self.l)
         self.set_bests = self.set_bests[self.generation.columns].append(bests[self.generation.columns]).reset_index(drop=True)
-        self.set_bests = self.set_bests.nsmallest(200, 'cost').reset_index(drop=True)
+        self.set_bests = self.set_bests.nsmallest(self.l * size_bests_gen, 'cost').reset_index(drop=True)
         print(len(self.set_bests), len(bests))
 
     def update_pm(self):
@@ -78,6 +79,14 @@ class SpEDA:
     def new_generation(self):
         # Elitist approach: % from previous generation
         self.generation = self.pm.sample(self.size_gen).to_pandas()
+        while len(self.generation) < self.size_gen:
+            self.generation = self.generation.append(self.pm.sample(self.size_gen).to_pandas()).reset_index(drop=True)
+            # remove those which do not meet the search space limits
+            self.generation = self.generation.T
+            self.generation = self.generation[self.generation.columns[(self.generation.max() < 80) &
+                                                                      (self.generation.min() > -80)]]
+            self.generation = self.generation.T
+
         # self.generation['cost'] = np.nan
         # self.generation = self.generation[self.variables].append(bests[self.variables]).reset_index(drop=True)
         # self.add_noise()

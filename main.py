@@ -29,7 +29,7 @@ for cost_f in [['cec1', benchmarking.cec14_1],
                 size_gen = 500
                 alpha = 0.7
                 eda = SpEDA(alpha=alpha, max_it=1500, dead_it=500, size_gen=size_gen,
-                            cost_function=cost_f[1], vector=initial_vector, model=SemiparametricBN)
+                            cost_function=cost_f[1], vector=initial_vector, l=4, per_l=100)
                 best_cost, best_ind, history = eda.run()
                 print(it, alpha, best_cost, size_gen, cost_f[0])
                 dt.loc[index] = [it, alpha, best_cost, size_gen, cost_f[0]]

@@ -12,7 +12,7 @@ class SpEDA:
     history = []
 
     def __init__(self, alpha: float, max_it: int, dead_it: int, size_gen: int,
-                 cost_function: callable, vector: pd.DataFrame, model):
+                 cost_function: callable, vector: pd.DataFrame, l, per_l):
         self.max_it = max_it
         self.dead_it = dead_it
         self.size_gen = size_gen
@@ -21,6 +21,8 @@ class SpEDA:
         self.cost_function = cost_function
         self.vector = vector
         self.variables = list(vector.columns)
+        self.l = l
+        self.per_l = per_l
 
         self.generation = pd.DataFrame(columns=self.variables + ['cost'])
         self.set_bests = pd.DataFrame(columns=self.variables + ['cost'])
@@ -52,11 +54,12 @@ class SpEDA:
         for i in range(len(self.generation)):
             self.generation.loc[i, 'cost'] = self.cost_function(self.generation[self.variables].loc[i].values)
 
-    def truncation(self, per_elitist):
+    def truncation(self):
         self.generation['cost'] = self.generation['cost'].astype(float)
         self.generation = self.generation.nsmallest(self.trunc_size, 'cost').reset_index(drop=True)
 
-        bests = self.generation.head(int(self.size_gen * per_elitist))
+        size_bests_gen = int(self.size_gen * self.per_l)
+        bests = self.generation.head(size_bests_gen*self.l)
         self.set_bests = self.set_bests[self.generation.columns].append(bests[self.generation.columns]).reset_index(drop=True)
         self.set_bests = self.set_bests.nsmallest(200, 'cost').reset_index(drop=True)
         print(len(self.set_bests), len(bests))
@@ -92,7 +95,7 @@ class SpEDA:
                 return self.best_cost, self.best_ind, self.history
 
             self.evaluation()
-            self.truncation(per_elitist=0.3)
+            self.truncation()
             self.update_pm()
 
             best_local_cost = float(self.generation.loc[0, 'cost'])

@@ -26,6 +26,8 @@ for cost_f in [['cec1', benchmarking.cec14_1],
     for it in range(15):
         for alpha in [0.4, 0.5, 0.6, 0.7, 0.8]:
             for size_gen in [200, 500, 1000]:
+                size_gen = 500
+                alpha = 0.7
                 eda = SpEDA(alpha=alpha, max_it=1500, dead_it=500, size_gen=size_gen,
                             cost_function=cost_f[1], vector=initial_vector, model=SemiparametricBN)
                 best_cost, best_ind, history = eda.run()

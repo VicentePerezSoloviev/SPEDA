@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from pybnesian import SemiparametricBN, GaussianNetwork
+from pybnesian import SemiparametricBN, GaussianNetwork, OperatorPool, GreedyHillClimbing, ValidatedLikelihood
+from pybnesian import ArcOperatorSet, ChangeNodeTypeSet
 import random
 
 
@@ -22,10 +23,13 @@ class SpEDA:
         self.variables = list(vector.columns)
 
         self.generation = pd.DataFrame(columns=self.variables + ['cost'])
-        self.pm = model(self.variables)
+        self.set_bests = pd.DataFrame(columns=self.variables + ['cost'])
+        self.pm = SemiparametricBN(self.variables)
         # self.pm = GaussianNetwork(self.variables)
 
-        self.initialization()
+        self.linear_initialization()
+
+        self.pool = OperatorPool([ArcOperatorSet(), ChangeNodeTypeSet()])
 
     def initialization(self):
         # initialize each element to a normal distribution
@@ -34,25 +38,52 @@ class SpEDA:
                                                     self.vector.loc['std', col],
                                                     size=self.size_gen)
 
+            self.set_bests[col] = np.random.normal(self.vector.loc['mu', col],
+                                                   self.vector.loc['std', col],
+                                                   size=1)
+
+    def linear_initialization(self):
+        for col in self.generation.drop('cost', axis=1).columns:
+            self.generation[col] = np.random.randint(-80, 80, self.size_gen).astype(float)
+            self.set_bests[col] = np.random.randint(-80, 80, 1).astype(float)
+            # self.generation[col] = np.arange(-80, 80, 160/self.size_gen)
+
     def evaluation(self):
         for i in range(len(self.generation)):
             self.generation.loc[i, 'cost'] = self.cost_function(self.generation[self.variables].loc[i].values)
 
-    def truncation(self):
+    def truncation(self, per_elitist):
         self.generation['cost'] = self.generation['cost'].astype(float)
         self.generation = self.generation.nsmallest(self.trunc_size, 'cost').reset_index(drop=True)
 
+        bests = self.generation.head(int(self.size_gen * per_elitist))
+        self.set_bests = self.set_bests[self.generation.columns].append(bests[self.generation.columns]).reset_index(drop=True)
+        self.set_bests = self.set_bests.nsmallest(200, 'cost').reset_index(drop=True)
+        print(len(self.set_bests), len(bests))
+
     def update_pm(self):
         self.pm = SemiparametricBN(self.variables)
-        self.pm.fit(self.generation.drop('cost', axis=1))
+        hc = GreedyHillClimbing()
+        df = self.generation.drop('cost', axis=1)
+        df = df[self.variables].append(self.set_bests[self.variables]).reset_index(drop=True)
+        vl = ValidatedLikelihood(df, k=2)
+        self.pm = hc.estimate(self.pool, vl, self.pm, verbose=False)
 
-    def new_generation(self, per_elitist=0.1):
-        # Elitist approach: 10% from previous generation and 90% new sampling
-        bests = self.generation.head(int(self.size_gen*per_elitist))
-        size_sampling = int((1-per_elitist)*self.size_gen)
-        self.generation = self.pm.sample(size_sampling).to_pandas()
+        # self.pm = SemiparametricBN(self.variables)
+        self.pm.fit(df)
+
+    def new_generation(self):
+        # Elitist approach: % from previous generation
+        self.generation = self.pm.sample(self.size_gen).to_pandas()
         # self.generation['cost'] = np.nan
-        self.generation = self.generation[self.variables].append(bests[self.variables]).reset_index(drop=True)
+        # self.generation = self.generation[self.variables].append(bests[self.variables]).reset_index(drop=True)
+        # self.add_noise()
+
+    def add_noise(self, size=0.2):
+        noise = pd.DataFrame(np.random.normal([0]*len(self.variables), [1000]*len(self.variables),
+                                              [int(self.size_gen*size), len(self.variables)]),
+                             columns=self.variables, dtype='float_')
+        self.generation[self.variables].append(noise).reset_index(drop=True)
 
     def run(self):
         no_improvement_it = 0
@@ -61,7 +92,7 @@ class SpEDA:
                 return self.best_cost, self.best_ind, self.history
 
             self.evaluation()
-            self.truncation()
+            self.truncation(per_elitist=0.3)
             self.update_pm()
 
             best_local_cost = float(self.generation.loc[0, 'cost'])
@@ -69,13 +100,17 @@ class SpEDA:
                 self.best_cost = best_local_cost
                 self.best_ind = self.generation.loc[0].to_dict()
                 no_improvement_it = 0
+                # print('IT', str(iteration), '\tcost', self.best_cost)
             else:
                 no_improvement_it += 1
 
+            for i in self.variables:
+                print(self.pm.cpd(str(i)))
+
             self.history.append(best_local_cost)
 
-            self.new_generation(per_elitist=0.1)
-            # print('IT', str(iteration), '\tcost', self.best_cost)
+            self.new_generation()
+            print('IT', str(iteration), '\tcost', self.best_cost)
 
         return self.best_cost, self.best_ind, self.history
 

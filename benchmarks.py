@@ -101,3 +101,68 @@ class Benchmarking:
 
         f8 = self.rastrigins_function(sum_vectors) + 800
         return f8
+
+    def cec14_2(self, x):
+        text_file = open("CEC2014/cec14-c-code/input_data/shift_data_2.txt", "r")
+        shifts = text_file.read().split()
+        sum_vectors = np.array(x) - np.array(shifts[:len(x)]).astype(np.float)
+
+        matrix_file = open("CEC2014/cec14-c-code/input_data/M_2_D" + str(len(x)) + ".txt", "r")
+        matrix_file = matrix_file.read().split()
+        matrix_file = np.array(matrix_file).astype(np.float)
+        matrix_file = np.reshape(matrix_file, (len(x), len(x)))
+
+        f2 = self.bent_cigar_function(np.dot(matrix_file, sum_vectors)) + 200
+        return f2
+
+    def cec14_5(self, x):
+        text_file = open("CEC2014/cec14-c-code/input_data/shift_data_5.txt", "r")
+        shifts = text_file.read().split()
+        sum_vectors = np.array(x) - np.array(shifts[:len(x)]).astype(np.float)
+
+        matrix_file = open("CEC2014/cec14-c-code/input_data/M_5_D" + str(len(x)) + ".txt", "r")
+        matrix_file = matrix_file.read().split()
+        matrix_file = np.array(matrix_file).astype(np.float)
+        matrix_file = np.reshape(matrix_file, (len(x), len(x)))
+
+        f5 = self.ackley_function(np.dot(matrix_file, sum_vectors)) + 500
+        return f5
+
+    def cec14_6(self, x):
+        text_file = open("CEC2014/cec14-c-code/input_data/shift_data_6.txt", "r")
+        shifts = text_file.read().split()
+        sum_vectors = (0.5/100)*(np.array(x) - np.array(shifts[:len(x)]).astype(np.float))
+
+        matrix_file = open("CEC2014/cec14-c-code/input_data/M_6_D" + str(len(x)) + ".txt", "r")
+        matrix_file = matrix_file.read().split()
+        matrix_file = np.array(matrix_file).astype(np.float)
+        matrix_file = np.reshape(matrix_file, (len(x), len(x)))
+
+        f6 = self.ackley_function(np.dot(matrix_file, sum_vectors)) + 600
+        return f6
+
+    def cec14_7(self, x):
+        text_file = open("CEC2014/cec14-c-code/input_data/shift_data_7.txt", "r")
+        shifts = text_file.read().split()
+        sum_vectors = (600 / 100) * (np.array(x) - np.array(shifts[:len(x)]).astype(np.float))
+
+        matrix_file = open("CEC2014/cec14-c-code/input_data/M_7_D" + str(len(x)) + ".txt", "r")
+        matrix_file = matrix_file.read().split()
+        matrix_file = np.array(matrix_file).astype(np.float)
+        matrix_file = np.reshape(matrix_file, (len(x), len(x)))
+
+        f7 = self.griewank_function(np.dot(matrix_file, sum_vectors)) + 700
+        return f7
+
+    def cec14_9(self, x):
+        text_file = open("CEC2014/cec14-c-code/input_data/shift_data_9.txt", "r")
+        shifts = text_file.read().split()
+        sum_vectors = (5.12/100) * (np.array(x) - np.array(shifts[:len(x)]).astype(np.float))
+
+        matrix_file = open("CEC2014/cec14-c-code/input_data/M_79D" + str(len(x)) + ".txt", "r")
+        matrix_file = matrix_file.read().split()
+        matrix_file = np.array(matrix_file).astype(np.float)
+        matrix_file = np.reshape(matrix_file, (len(x), len(x)))
+
+        f9 = self.rastrigins_function(np.dot(matrix_file, sum_vectors)) + 900
+        return f9

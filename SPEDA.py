@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pybnesian import SemiparametricBN, GaussianNetwork, OperatorPool, GreedyHillClimbing, ValidatedLikelihood
-from pybnesian import ArcOperatorSet, ChangeNodeTypeSet
+from pybnesian import ArcOperatorSet, ChangeNodeTypeSet, CKDE
 import random
 
 
@@ -63,7 +63,7 @@ class SpEDA:
         bests = self.generation.head(self.size_bests_gen*self.l)
         self.set_bests = self.set_bests[self.generation.columns].append(bests[self.generation.columns]).reset_index(drop=True)
         self.set_bests = self.set_bests.nsmallest(self.l * self.size_bests_gen, 'cost').reset_index(drop=True)
-        print(len(self.set_bests), len(bests))
+        # print(len(self.set_bests), len(bests))
 
     def update_pm(self):
         self.pm = SemiparametricBN(self.variables)
@@ -101,6 +101,7 @@ class SpEDA:
         self.generation[self.variables].append(noise)[self.variables].reset_index(drop=True)
 
     def run(self):
+        percentage_kernel = []
         no_improvement_it = 0
         for iteration in range(self.max_it):
             if no_improvement_it == self.dead_it:
@@ -119,16 +120,26 @@ class SpEDA:
             else:
                 no_improvement_it += 1
 
-            for i in self.variables:
-                print(self.pm.cpd(str(i)))
+            '''for i in self.variables:
+                print(self.pm.cpd(str(i)))'''
 
             self.history.append(best_local_cost)
+            percentage_kernel.append(per_cpd_type(self.pm, CKDE))
 
             self.new_generation()
-            print('IT', str(iteration), '\tcost', self.best_cost)
+            print('IT', str(iteration), '\tcost', self.best_cost, percentage_kernel[-1])
 
-        return self.best_cost, self.best_ind, self.history
+        return self.best_cost, self.best_ind, self.history, percentage_kernel
 
 
 def random_float(low, high):
     return random.random()*(high-low) + low
+
+
+def per_cpd_type(bn, type_cpd):
+    total = 0
+    for node in bn.nodes():
+        if type(bn.cpd(node)) == type_cpd:
+            total += 1
+    return total/bn.num_nodes()
+

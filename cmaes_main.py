@@ -3,14 +3,15 @@ from cmaes import CMA
 from benchmarks import Benchmarking
 import pandas as pd
 import math
+from time import process_time
 
 
 def trad_cmaes(num_vars, cost_function, dead_it, max_it=50):
     optimizer = CMA(mean=np.zeros(num_vars), sigma=1.3)
 
     evals = 0
-    # for generation in range(int(num_vars*10000/optimizer.population_size)):
-    while evals <= 300000:
+    print(optimizer.population_size)
+    while evals <= int(300000 / optimizer.population_size):
         solutions = []
         for _ in range(optimizer.population_size):
             x = optimizer.ask()
@@ -31,8 +32,8 @@ def ipop_cmaes(cost_function, num_vars, max_it=50, min=-100, max=100):
     optimizer = CMA(mean=mean, sigma=sigma, bounds=bounds, seed=0)
 
     evaluations = 0
-    # for generation in range(int(num_vars*10000/optimizer.population_size)):
-    while evaluations <= 300000:
+    print(optimizer.population_size)
+    while evaluations <= int(300000 / optimizer.population_size):
         solutions = []
         for _ in range(optimizer.population_size):
             x = optimizer.ask()
@@ -175,18 +176,40 @@ solutions = ipop_cmaes(benchmarking.rastrigins_function, num_vars,
 print(solutions)
 print(min([i[1] for i in solutions]))'''
 
-dt = pd.DataFrame(columns=['it', 'sol', 'cost_function'])
+dt = pd.DataFrame(columns=['it', 'sol', 'cost_function', 'times'])
 index = 0
 num_vars = 30
 benchmarking = Benchmarking(num_vars)
-for cost_f in [['cec1', benchmarking.cec14_1],
+'''for cost_f in [['cec1', benchmarking.cec14_1],
+               ['cec2', benchmarking.cec14_2],
                ['cec4', benchmarking.cec14_4],
-               ['cec8', benchmarking.cec14_8]]:
+               ['cec5', benchmarking.cec14_5],
+               ['cec6', benchmarking.cec14_6],
+               ['cec7', benchmarking.cec14_7],
+               ['cec8', benchmarking.cec14_8],
+               ['cec9', benchmarking.cec14_9]]:'''
+for cost_f in [['cec1', benchmarking.cec14_1],
+               ['cec2', benchmarking.cec14_2],
+               ['cec3', benchmarking.cec14_3],
+               ['cec4', benchmarking.cec14_4],
+               ['cec5', benchmarking.cec14_5],
+               ['cec6', benchmarking.cec14_6],
+               ['cec7', benchmarking.cec14_7],
+               ['cec8', benchmarking.cec14_8],
+               ['cec9', benchmarking.cec14_9],
+               ['cec10', benchmarking.cec14_10],
+               ['cec11', benchmarking.cec14_11],
+               ['cec12', benchmarking.cec14_12],
+               ['cec13', benchmarking.cec14_13],
+               ['cec14', benchmarking.cec14_14],
+               ['cec16', benchmarking.cec14_16]]:
     for it in range(15):
+        t1_start = process_time()
         solutions = trad_cmaes(num_vars, cost_f[1], dead_it=1500, max_it=1500)
+        t1_stop = process_time()
 
-        dt.loc[index] = [it, min([i[1] for i in solutions]), cost_f[0]]
+        dt.loc[index] = [it, min([i[1] for i in solutions]), cost_f[0], t1_stop-t1_start]
         print(it, min([i[1] for i in solutions]), cost_f[0])
         index += 1
 
-        dt.to_csv('results_cmaes_Funcs.csv')
+        dt.to_csv('times_30d_cmaes.csv')
